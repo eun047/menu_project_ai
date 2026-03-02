@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect
 import os
 import json
 import random
@@ -58,19 +58,19 @@ def recommend_by_tags(menus, selected_tags):
 
     return random.choice(candidates)
 
-# 1️⃣ 메인 페이지 (방식 선택)
+# 메인 페이지 (방식 선택)
 @app.route("/")
 def index():
     return render_template("index.html")
 
 
-# 2️⃣ 상황 선택 페이지
+# 상황 선택 페이지
 @app.route("/condition")
 def condition_page():
     return render_template("condition.html")
 
 
-# 3️⃣ 태그 선택 페이지
+# 태그 선택 페이지
 @app.route("/tags")
 def tags_page():
     menus = load_all_menus()
@@ -78,7 +78,7 @@ def tags_page():
     return render_template("tags.html", tags=all_tags)
 
 
-# 4️⃣ 결과 페이지
+# 결과 페이지
 @app.route("/result", methods=["POST"])
 def result_page():
     menus = load_all_menus()
@@ -99,6 +99,40 @@ def result_page():
                                selected_tags=selected_tags)
 
     return render_template("result.html", result=None)
+
+# 피드백 저장
+@app.route("/feedback", methods=["POST"])
+def feedback():
+    menu_name = request.form.get("menu_name")
+    mode = request.form.get("mode")
+    feedback = request.form.get("feedback")
+    meal_time = request.form.get("meal_time")
+    people = request.form.get("people")
+    selected_tags = request.form.getlist("tags")
+
+    log_entry = {
+        "menu_name": menu_name,
+        "mode": mode,
+        "feedback": feedback,
+        "meal_time": meal_time,
+        "people": people,
+        "tags": selected_tags
+    }
+
+    # logs.json에 저장
+    logs_path = "logs.json"
+    if os.path.exists(logs_path):
+        with open(logs_path, "r", encoding="utf-8") as f:
+            logs = json.load(f)
+    else:
+        logs = []
+
+    logs.append(log_entry)
+
+    with open(logs_path, "w", encoding="utf-8") as f:
+        json.dump(logs, f, ensure_ascii=False, indent=2)
+
+    return redirect("/")
 
 # 실행
 if __name__ == "__main__":
