@@ -218,6 +218,22 @@
 
             <!-- 동일 조건으로 다시 추천 -->
             <div class="btn-group">
+                <!-- 긍정 피드백 -->
+                <form action="/feedback" method="POST">
+                    <input type="hidden" name="menu_name" value="{{ result.name }}">
+                    <input type="hidden" name="mode" value="{{ mode }}">
+                    {% if mode == "condition" %}
+                        <input type="hidden" name="meal_time" value="{{ meal_time }}">
+                        <input type="hidden" name="people" value="{{ people }}">
+                    {% elif mode == "tags" %}
+                        {% for tag in selected_tags %}
+                        <input type="hidden" name="tags" value="{{ tag }}">
+                        {% endfor %}
+                    {% endif %}
+                    <input type="hidden" name="feedback" value="accepted">
+                    <button type="submit" class="home-btn" style="background:#e8f5e9; color:#2e7d32;">✅ 이걸로 결정!</button>
+                </form>
+
                 <form action="/result" method="POST">
                     <input type="hidden" name="mode" value="{{ mode }}">
 
@@ -229,6 +245,9 @@
                         <input type="hidden" name="tags" value="{{ tag }}">
                         {% endfor %}
                     {% endif %}
+                    
+                    <input type="hidden" name="feedback" value="rejected">
+                    <input type="hidden" name="prev_menu" value="{{ result.name }}">
 
                     <button type="submit" class="retry-btn">✦ 다시 추천받기</button>
                 </form>
