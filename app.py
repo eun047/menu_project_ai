@@ -84,6 +84,31 @@ def result_page():
     menus = load_all_menus()
     result = None
     mode = request.form.get("mode")
+    feedback = request.form.get("feedback")
+    prev_menu = request.form.get("prev_menu")
+
+    # rejected 로그 저장
+    if feedback == "rejected" and prev_menu:
+        log_entry = {
+            "menu_name": prev_menu,
+            "mode": mode,
+            "feedback": "rejected",
+            "meal_time": request.form.get("meal_time"),
+            "people": request.form.get("people"),
+            "tags": request.form.getlist("tags")
+        }
+
+        logs_path = "logs.json"
+        if os.path.exists(logs_path):
+            with open(logs_path, "r", encoding="utf-8") as f:
+                logs = json.load(f)
+        else:
+            logs = []
+
+        logs.append(log_entry)
+
+        with open(logs_path, "w", encoding="utf-8") as f:
+            json.dump(logs, f, ensure_ascii=False, indent=2)
 
     if mode == "condition":
         meal_time = request.form.get("meal_time")
@@ -99,7 +124,6 @@ def result_page():
                                selected_tags=selected_tags)
 
     return render_template("result.html", result=None)
-
 # 피드백 저장
 @app.route("/feedback", methods=["POST"])
 def feedback():
