@@ -87,6 +87,26 @@ def recommend_by_tags(menus, selected_tags):
     if not candidates:
         return None
 
+    # 모델 적용
+    model_data = load_model()
+    if model_data:
+        try:
+            model = model_data["model_tags"]
+            mlb = model_data["mlb"]
+
+            scores = []
+            for candidate in candidates:
+                X = mlb.transform([selected_tags])
+                score = model.predict_proba(X)[0][1]  # accepted 확률
+                scores.append(score)
+
+            # 점수 높은 메뉴 반환
+            best_index = scores.index(max(scores))
+            return candidates[best_index]
+        except:
+            pass
+
+    # 모델 없으면 랜덤
     return random.choice(candidates)
 
 # 메인 페이지 (방식 선택)
