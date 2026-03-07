@@ -41,7 +41,8 @@ def collect_all_tags(menus):
 
 
 # 상황 기반 추천 로직
-def recommend_by_condition(menus, meal_time, people):
+def recommend_by_condition(menus, meal_time, people, prev_menu=None):
+    print(f"prev_menu: {prev_menu}")
     candidates = []
 
     for menu in menus:
@@ -52,7 +53,12 @@ def recommend_by_condition(menus, meal_time, people):
     if not candidates:
         return None
 
-    # 모델 적용
+    # 다시 추천받기면 이전 메뉴 제외 후 랜덤
+    if prev_menu:
+        filtered = [m for m in candidates if m["name"] != prev_menu]
+        return random.choice(filtered) if filtered else random.choice(candidates)
+
+    # 처음 추천이면 모델 적용
     model_data = load_model()
     if model_data:
         try:
@@ -64,20 +70,18 @@ def recommend_by_condition(menus, meal_time, people):
 
             for candidate in candidates:
                 X = np.array([[meal_time_encoded, people]])
-                score = model.predict_proba(X)[0][1]  # accepted 확률
+                score = model.predict_proba(X)[0][1]
                 scores.append(score)
 
-            # 점수 높은 메뉴 반환
             best_index = scores.index(max(scores))
             return candidates[best_index]
         except:
             pass
 
-    # 모델 없으면 랜덤
     return random.choice(candidates)
 
 # 태그 기반 추천 로직 (하나라도 포함되면 후보)
-def recommend_by_tags(menus, selected_tags):
+def recommend_by_tags(menus, selected_tags, prev_menu=None):
     candidates = []
 
     for menu in menus:
@@ -87,7 +91,12 @@ def recommend_by_tags(menus, selected_tags):
     if not candidates:
         return None
 
-    # 모델 적용
+    # 다시 추천받기면 이전 메뉴 제외 후 랜덤
+    if prev_menu:
+        filtered = [m for m in candidates if m["name"] != prev_menu]
+        return random.choice(filtered) if filtered else random.choice(candidates)
+
+    # 처음 추천이면 모델 적용
     model_data = load_model()
     if model_data:
         try:
@@ -97,16 +106,14 @@ def recommend_by_tags(menus, selected_tags):
             scores = []
             for candidate in candidates:
                 X = mlb.transform([selected_tags])
-                score = model.predict_proba(X)[0][1]  # accepted 확률
+                score = model.predict_proba(X)[0][1]
                 scores.append(score)
 
-            # 점수 높은 메뉴 반환
             best_index = scores.index(max(scores))
             return candidates[best_index]
         except:
             pass
 
-    # 모델 없으면 랜덤
     return random.choice(candidates)
 
 # 메인 페이지 (방식 선택)
@@ -164,15 +171,15 @@ def result_page():
     if mode == "condition":
         meal_time = request.form.get("meal_time")
         people = int(request.form.get("people", 1))
-        result = recommend_by_condition(menus, meal_time, people)
+        result = recommend_by_condition(menus, meal_time, people, prev_menu)
         return render_template("result.html", result=result, mode=mode,
-                               meal_time=meal_time, people=people)
+                            meal_time=meal_time, people=people)
 
     elif mode == "tags":
         selected_tags = request.form.getlist("tags")
-        result = recommend_by_tags(menus, selected_tags)
+        result = recommend_by_tags(menus, selected_tags, prev_menu)
         return render_template("result.html", result=result, mode=mode,
-                               selected_tags=selected_tags)
+                            selected_tags=selected_tags)
 
     return render_template("result.html", result=None)
 
