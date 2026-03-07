@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, redirect
 import os
 import json
 import random
+import pickle
+import numpy as np
 
 app = Flask(__name__)
 
@@ -19,6 +21,13 @@ def load_all_menus(data_dir = "data"):
                 all_menus.extend(menus)
 
     return all_menus
+
+# 모델 로딩
+def load_model():
+    if os.path.exists("model.pkl"):
+        with open("model.pkl", "rb") as f:
+            return pickle.load(f)
+    return None
 
 # 태그 목록 수집
 def collect_all_tags(menus):
@@ -124,6 +133,7 @@ def result_page():
                                selected_tags=selected_tags)
 
     return render_template("result.html", result=None)
+
 # 피드백 저장
 @app.route("/feedback", methods=["POST"])
 def feedback():
