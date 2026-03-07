@@ -48,10 +48,32 @@ def recommend_by_condition(menus, meal_time, people):
         if meal_time in menu["meal_time"]:
             if menu["min_people"] <= people <= menu["max_people"]:
                 candidates.append(menu)
-        
+
     if not candidates:
         return None
 
+    # 모델 적용
+    model_data = load_model()
+    if model_data:
+        try:
+            model = model_data["model_condition"]
+            meal_time_encoder = model_data["meal_time_encoder"]
+
+            meal_time_encoded = meal_time_encoder.transform([meal_time])[0]
+            scores = []
+
+            for candidate in candidates:
+                X = np.array([[meal_time_encoded, people]])
+                score = model.predict_proba(X)[0][1]  # accepted 확률
+                scores.append(score)
+
+            # 점수 높은 메뉴 반환
+            best_index = scores.index(max(scores))
+            return candidates[best_index]
+        except:
+            pass
+
+    # 모델 없으면 랜덤
     return random.choice(candidates)
 
 # 태그 기반 추천 로직 (하나라도 포함되면 후보)
